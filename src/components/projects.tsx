@@ -1,10 +1,9 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
 import { ArrowUpRight } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
-import { Tilt } from 'react-tilt';
 
 const projects = [
     {
@@ -33,17 +32,7 @@ const projects = [
     },
 ];
 
-const defaultTiltOptions = {
-    reverse: false,  // reverse the tilt direction
-    max: 15,     // max tilt rotation (degrees)
-    perspective: 1000,   // Transform perspective, the lower the more extreme the tilt gets.
-    scale: 1.02,   // 2 = 200%, 1.5 = 150%, etc..
-    speed: 1000,   // Speed of the enter/exit transition
-    transition: true,   // Set a transition on enter/exit.
-    axis: null,   // What axis should be disabled. Can be X or Y.
-    reset: true,   // If the tilt effect has to be reset on exit.
-    easing: "cubic-bezier(.03,.98,.52,.99)",    // Easing on enter/exit.
-}
+
 
 export function Projects() {
     return (
@@ -71,39 +60,78 @@ export function Projects() {
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 auto-rows-[350px]">
                     {projects.map((project, index) => (
-                        <Tilt key={index} options={defaultTiltOptions} className={cn("h-full", project.className.includes("col-span-2") ? "md:col-span-2" : "")}>
-                            <motion.div
-                                initial={{ opacity: 0, y: 30 }}
-                                whileInView={{ opacity: 1, y: 0 }}
-                                viewport={{ once: true }}
-                                transition={{ delay: index * 0.1 }}
-                                className={cn(
-                                    "relative group h-full rounded-3xl p-10 border border-white/10 overflow-hidden flex flex-col justify-end transition-all hover:border-white/20",
-                                    project.className
-                                )}
-                            >
-                                {/* Abstract Gradient Overlay */}
-                                <div className="absolute inset-0 opacity-20 bg-gradient-to-br from-white/10 to-transparent" />
-
-                                <div className="mb-auto">
-                                    <span className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-white/10 backdrop-blur-sm border border-white/10 text-white mb-4 group-hover:scale-110 transition-transform">
-                                        <ArrowUpRight className="w-6 h-6" />
-                                    </span>
-                                </div>
-
-                                <div className="relative z-10 transition-transform duration-300 group-hover:-translate-y-2">
-                                    <h3 className="text-3xl font-bold font-display mb-2">{project.title}</h3>
-                                    <p className="text-muted-foreground text-lg">{project.description}</p>
-                                </div>
-
-                                <Link href={project.link} className="absolute inset-0 z-20">
-                                    <span className="sr-only">View project</span>
-                                </Link>
-                            </motion.div>
-                        </Tilt>
+                        <TiltCard key={index} project={project} index={index} />
                     ))}
                 </div>
-            </div>
-        </section>
+
+
+                function TiltCard({project, index}: {project: any, index: number }) {
+    const x = useMotionValue(0);
+                const y = useMotionValue(0);
+
+                const mouseX = useSpring(x, {stiffness: 500, damping: 100 });
+                const mouseY = useSpring(y, {stiffness: 500, damping: 100 });
+
+                function onMouseMove({currentTarget, clientX, clientY}: React.MouseEvent) {
+        const {left, top, width, height} = currentTarget.getBoundingClientRect();
+                x.set(clientX - left - width / 2);
+                y.set(clientY - top - height / 2);
+    }
+
+                function onMouseLeave() {
+                    x.set(0);
+                y.set(0);
+    }
+
+                const rotateX = useTransform(mouseY, [-175, 175], [15, -15]); // Max 15deg tilt
+                const rotateY = useTransform(mouseX, [-175, 175], [-15, 15]);
+
+                return (
+                <motion.div
+                    style={{
+                        perspective: 1000,
+                    }}
+                    className={cn("h-full", project.className.includes("col-span-2") ? "md:col-span-2" : "")}
+                >
+                    <motion.div
+                        initial={{ opacity: 0, y: 30 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ delay: index * 0.1 }}
+                        onMouseMove={onMouseMove}
+                        onMouseLeave={onMouseLeave}
+                        style={{
+                            rotateX,
+                            rotateY,
+                            transformStyle: "preserve-3d",
+                        }}
+                        className={cn(
+                            "relative group h-full rounded-3xl p-10 border border-white/10 overflow-hidden flex flex-col justify-end transition-all hover:border-white/20",
+                            project.className
+                        )}
+                    >
+                        {/* Abstract Gradient Overlay */}
+                        <div className="absolute inset-0 opacity-20 bg-gradient-to-br from-white/10 to-transparent pointer-events-none" />
+
+                        <div className="mb-auto pointer-events-none transform-style-3d group-hover:translate-z-10 transition-transform duration-500">
+                            <span className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-white/10 backdrop-blur-sm border border-white/10 text-white mb-4 group-hover:scale-110 transition-transform">
+                                <ArrowUpRight className="w-6 h-6" />
+                            </span>
+                        </div>
+
+                        <div className="relative z-10 transition-transform duration-300 group-hover:-translate-y-2 pointer-events-none group-hover:translate-z-20">
+                            <h3 className="text-3xl font-bold font-display mb-2">{project.title}</h3>
+                            <p className="text-muted-foreground text-lg">{project.description}</p>
+                        </div>
+
+                        <Link href={project.link} className="absolute inset-0 z-20">
+                            <span className="sr-only">View project</span>
+                        </Link>
+                    </motion.div>
+                </motion.div>
+                );
+}
+            </div >
+        </section >
     );
 }
