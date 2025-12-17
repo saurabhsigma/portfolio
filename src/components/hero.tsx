@@ -113,7 +113,7 @@ export function Hero() {
                 <p className="text-xl md:text-2xl text-muted-foreground mb-12 max-w-xl mx-auto font-light leading-relaxed">
                     Crafting digital experiences with precision and soul.
                     <br />
-                    <span className="italic opacity-70">Programmer • Web Developer</span>
+                    <span className="italic opacity-70">Programmer • App Developer</span>
                 </p>
 
                 <div className="flex gap-6 justify-center items-center">
